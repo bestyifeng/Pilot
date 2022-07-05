@@ -48,16 +48,15 @@ namespace Pilot
 
         Vector3 final_position = current_position;
 
-        m_is_touch_ground = physics_scene->sweep(
-            m_rigidbody_shape,
-            world_transform.getMatrix(),
-            Vector3::NEGATIVE_UNIT_Z,
-            0.105f,
-            hits);
+        m_is_touch_ground = physics_scene->sweep(m_rigidbody_shape, world_transform.getMatrix(), Vector3::NEGATIVE_UNIT_Z, 0.205f, hits)
+            && physics_scene->raycast(world_transform.m_position, Vector3::NEGATIVE_UNIT_Z, 0.205f, hits);
 
         hits.clear();
         
         world_transform.m_position -= 0.1f * Vector3::UNIT_Z;
+
+        bool is_vertical_block = false;
+        bool is_horizontal_block = false;
 
         // vertical pass
         if (physics_scene->sweep(
@@ -67,6 +66,7 @@ namespace Pilot
             vertical_displacement.length(),
             hits))
         {
+            is_vertical_block = true;
             final_position += hits[0].hit_distance * vertical_direction;
         }
         else
@@ -77,18 +77,61 @@ namespace Pilot
         hits.clear();
 
         // side pass
-        //if (physics_scene->sweep(
-        //    m_rigidbody_shape,
-        //    /**** [0] ****/,
-        //    /**** [1] ****/,
-        //    /**** [2] ****/,
-        //    hits))
-        //{
-        //    final_position += /**** [3] ****/;
-        //}
-        //else
+        if (physics_scene->sweep(
+            m_rigidbody_shape,
+            world_transform.getMatrix(),
+            horizontal_direction,
+            horizontal_displacement.length(),
+            hits))
+        {
+            is_horizontal_block = true;
+            final_position += hits[0].hit_distance * horizontal_direction;
+
+            //walk against the wall
+            if (hits[0].hit_distance < 0.01f)
+            { 
+                final_position += horizontal_displacement.project(hits[0].hit_normal);
+            }
+        }
+        else
         {
             final_position += horizontal_displacement;
+        }
+
+        // block adjust
+        if (is_horizontal_block)
+        {
+            // go upstairs
+            Transform new_transform = Transform(world_transform.m_position + horizontal_displacement + Vector3(0.0f, 0.0f, 0.5f),
+                world_transform.m_rotation, world_transform.m_scale);
+            if (!physics_scene->sweep(
+                m_rigidbody_shape,
+                new_transform.getMatrix(),
+                horizontal_direction,
+                horizontal_displacement.length(),
+                hits))
+            {
+                if (physics_scene->sweep(
+                    m_rigidbody_shape,
+                    new_transform.getMatrix(),
+                    vertical_direction,
+                    0.5f,
+                    hits))
+                {
+                    final_position += horizontal_displacement;
+                    final_position.z = hits[0].hit_position.z;
+                }
+            }
+
+            // block at wall
+            else if (is_vertical_block && !physics_scene->raycast(
+                world_transform.m_position,
+                vertical_direction,
+                0.05f,
+                hits))
+            {
+                final_position -= 0.05 * horizontal_direction;
+            }
         }
 
         return final_position;

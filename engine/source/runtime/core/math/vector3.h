@@ -5,6 +5,8 @@
 #include "runtime/core/meta/reflection/reflection.h"
 
 #include <cassert>
+#include <string>
+#include <sstream>
 
 namespace Pilot
 {
@@ -436,6 +438,13 @@ namespace Pilot
         {
             return Vector3(
                 Math::clamp(v.x, min.x, max.x), Math::clamp(v.y, min.y, max.y), Math::clamp(v.z, min.z, max.z));
+        }
+
+        std::string toString()
+        {
+            std::stringstream ss;
+            ss << x << ", " << y << ", " << z;
+            return ss.str();
         }
 
         static float getMaxElement(const Vector3& v) { return Math::getMaxElement(v.x, v.y, v.z); }

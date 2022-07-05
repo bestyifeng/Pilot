@@ -1,5 +1,5 @@
 #include "runtime/function/framework/component/animation/animation_component.h"
-
+#include "runtime/core/base/macro.h"
 #include "runtime/function/animation/animation_system.h"
 #include "runtime/function/framework/object/object.h"
 #include <runtime/engine.h>
@@ -144,7 +144,7 @@ namespace Pilot
             m_skeleton.resetSkeleton();
             m_skeleton.applyAdditivePose(pose);
             m_skeleton.extractPose(pose);
-        
+       
 
         m_skeleton.applyPose(pose);
         m_animation_result = m_skeleton.outputAnimationResult();
@@ -177,7 +177,7 @@ namespace Pilot
             }
             poses[0].blend(poses[i]);
         }
-
+        //LOG_INFO(poses[0].m_bone_poses[10].m_position.toString());
         m_skeleton.applyPose(poses[0]);
         m_animation_result = m_skeleton.outputAnimationResult();
     }
